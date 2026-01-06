@@ -15,7 +15,8 @@
             content: '\f058'; font-family: 'Font Awesome 5 Free'; font-weight: 900;
             position: absolute; top: 10px; right: 10px; color: #2563eb; font-size: 24px; background: white; border-radius: 50%;
         }
-        #pdfSablon { display: none; }
+        /* PDF Şablonu başlangıçta tamamen görünmez ve yer kaplamaz */
+        #pdfSablon { position: absolute; left: -9999px; top: -9999px; background: white; }
     </style>
 </head>
 <body class="bg-slate-100 pb-20">
@@ -27,37 +28,3 @@
         </div>
 
         <div class="p-8">
-            <h3 class="text-xl font-bold text-slate-800 mb-6 flex items-center">
-                <i class="fas fa-utensils text-orange-500 mr-3"></i> Yemek Tercihinizi Seçiniz
-            </h3>
-            
-            <div class="grid md:grid-cols-2 gap-6 mb-10">
-                <div id="kofteCard" onclick="secYemek('Köfte Menü')" class="menu-option bg-white rounded-2xl shadow-sm border-2 border-slate-100 overflow-hidden">
-                    <img src="WhatsApp Image 2026-01-05 at 17.59.04.jpeg" alt="Köfte Menü" class="w-full h-56 object-cover">
-                    <div class="p-4 text-center">
-                        <span class="font-bold text-slate-800">Tam Porsiyon Köfte Ekmek Menü</span>
-                    </div>
-                </div>
-
-                <div id="donerCard" onclick="secYemek('Döner Menü')" class="menu-option bg-white rounded-2xl shadow-sm border-2 border-slate-100 overflow-hidden">
-                    <img src="WhatsApp Image 2026-01-05 at 18.04.20.jpeg" alt="Döner Menü" class="w-full h-56 object-cover">
-                    <div class="p-4 text-center">
-                        <span class="font-bold text-slate-800">Patatesli Döner Ekmek Menü</span>
-                    </div>
-                </div>
-            </div>
-
-            <form id="geziFormu" class="space-y-6">
-                <input type="hidden" id="secilenYemek" required>
-                
-                <div class="grid md:grid-cols-2 gap-6">
-                    <div class="space-y-4">
-                        <h4 class="font-bold text-blue-800 border-b pb-2">Öğrenci Bilgileri</h4>
-                        <input type="text" id="ogrAd" placeholder="Adı Soyadı" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" required>
-                        <input type="text" id="ogrTC" placeholder="T.C. Kimlik No" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" maxlength="11" required>
-                        <input type="text" id="ogrSinif" placeholder="Sınıf / Okul No" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" required>
-                    </div>
-                    <div class="space-y-4">
-                        <h4 class="font-bold text-blue-800 border-b pb-2">Veli Bilgileri</h4>
-                        <input type="text" id="veliAd" placeholder="Veli Adı Soyadı" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" required>
-                        <input type="tel" id="veliTel" placeholder="İletişim Telefonu" class="w-full p-3 border rounded-lg focus:ring
