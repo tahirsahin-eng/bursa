@@ -28,3 +28,122 @@
         </div>
 
         <div class="p-8">
+            <h3 class="text-xl font-bold text-slate-800 mb-6 flex items-center">
+                <i class="fas fa-utensils text-orange-500 mr-3"></i> Yemek Tercihinizi Seçiniz
+            </h3>
+            
+            <div class="grid md:grid-cols-2 gap-6 mb-10">
+                <div id="kofteCard" onclick="secYemek('Köfte Menü')" class="menu-option bg-white rounded-2xl shadow-sm border-2 border-slate-100 overflow-hidden">
+                    <img src="WhatsApp Image 2026-01-05 at 17.59.04.jpeg" alt="Köfte Menü" class="w-full h-56 object-cover">
+                    <div class="p-4 text-center">
+                        <span class="font-bold text-slate-800">Tam Porsiyon Köfte Ekmek Menü</span>
+                    </div>
+                </div>
+
+                <div id="donerCard" onclick="secYemek('Döner Menü')" class="menu-option bg-white rounded-2xl shadow-sm border-2 border-slate-100 overflow-hidden">
+                    <img src="WhatsApp Image 2026-01-05 at 18.04.20.jpeg" alt="Döner Menü" class="w-full h-56 object-cover">
+                    <div class="p-4 text-center">
+                        <span class="font-bold text-slate-800">Patatesli Döner Ekmek Menü</span>
+                    </div>
+                </div>
+            </div>
+
+            <form id="geziFormu" class="space-y-6">
+                <input type="hidden" id="secilenYemek" required>
+                
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="space-y-4">
+                        <h4 class="font-bold text-blue-800 border-b pb-2">Öğrenci Bilgileri</h4>
+                        <input type="text" id="ogrAd" placeholder="Adı Soyadı" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" required>
+                        <input type="text" id="ogrTC" placeholder="T.C. Kimlik No" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" maxlength="11" required>
+                        <input type="text" id="ogrSinif" placeholder="Sınıf / Okul No" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" required>
+                    </div>
+                    <div class="space-y-4">
+                        <h4 class="font-bold text-blue-800 border-b pb-2">Veli Bilgileri</h4>
+                        <input type="text" id="veliAd" placeholder="Veli Adı Soyadı" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" required>
+                        <input type="tel" id="veliTel" placeholder="İletişim Telefonu" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" required>
+                    </div>
+                </div>
+
+                <div class="bg-amber-50 p-4 rounded-xl text-sm text-amber-900 border border-amber-200 mt-6">
+                    <p><strong>Bilgi:</strong> Gezi ücreti 1700 TL'dir ve en geç 5 Şubat 2026 tarihine kadar teslim edilmelidir.</p>
+                    <p class="mt-1">Yanında yedek kıyafet bulundurmayan öğrencilerin sorumluluğu veliye aittir.</p>
+                </div>
+
+                <button type="button" onclick="pdfIndir()" class="w-full bg-blue-700 text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:bg-blue-800 transition">
+                    <i class="fas fa-file-download mr-2"></i> BAŞVURUYU TAMAMLA VE PDF İNDİR
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div id="pdfSablon" style="padding: 40px; width: 700px; color: black; background-color: white;">
+        <div style="text-align: center; border-bottom: 2px solid black; padding-bottom: 20px; margin-bottom: 30px;">
+            <h2 style="margin: 0; font-size: 20px;">SAFFET ÇAM ORTAOKULU MÜDÜRLÜĞÜ</h2>
+            <h3 style="margin: 10px 0 0 0; font-size: 18px; text-decoration: underline;">14 ŞUBAT ULUDAĞ GEZİSİ VELİ İZİN BELGESİ</h3>
+        </div>
+        
+        <p style="font-size: 16px; line-height: 1.6;">
+            Velisi bulunduğum <strong id="p_ogrAd">....................</strong> isimli öğrencinin, 
+            <strong>14 Şubat 2026</strong> tarihindeki geziye katılmasına izin veriyorum.
+        </p>
+        
+        <table style="width: 100%; border-collapse: collapse; margin: 30px 0;">
+            <tr><td style="border: 1px solid black; padding: 10px; font-weight: bold; width: 40%;">Öğrenci T.C. No:</td><td style="border: 1px solid black; padding: 10px;" id="p_ogrTC"></td></tr>
+            <tr><td style="border: 1px solid black; padding: 10px; font-weight: bold;">Sınıf / Okul No:</td><td style="border: 1px solid black; padding: 10px;" id="p_ogrSinif"></td></tr>
+            <tr><td style="border: 1px solid black; padding: 10px; font-weight: bold;">Yemek Tercihi:</td><td style="border: 1px solid black; padding: 10px; font-weight: bold; color: blue;" id="p_yemek"></td></tr>
+            <tr><td style="border: 1px solid black; padding: 10px; font-weight: bold;">Veli Adı Soyadı:</td><td style="border: 1px solid black; padding: 10px;" id="p_veliAd"></td></tr>
+            <tr><td style="border: 1px solid black; padding: 10px; font-weight: bold;">Veli İletişim:</td><td style="border: 1px solid black; padding: 10px;" id="p_veliTel"></td></tr>
+        </table>
+
+        <p style="font-size: 14px; margin-top: 20px;">
+            Gezi ücretini ve bu belgeyi en geç <strong>5 Şubat 2026</strong> tarihine kadar Okul Aile Birliği Temsilcisi Fatma Erdem'e teslim edeceğimi beyan ederim.
+        </p>
+        
+        <div style="margin-top: 80px; display: flex; justify-content: space-between;">
+            <div style="font-size: 14px;">Tarih: ____ / ____ / 2026</div>
+            <div style="text-align: center; font-weight: bold;">Veli İmza<br><br><br>_________________</div>
+        </div>
+    </div>
+
+    <script>
+        function secYemek(tip) {
+            document.getElementById('secilenYemek').value = tip;
+            document.getElementById('kofteCard').classList.remove('selected');
+            document.getElementById('donerCard').classList.remove('selected');
+            if(tip === 'Köfte Menü') document.getElementById('kofteCard').classList.add('selected');
+            else document.getElementById('donerCard').classList.add('selected');
+        }
+
+        function pdfIndir() {
+            const yemek = document.getElementById('secilenYemek').value;
+            const ogrAd = document.getElementById('ogrAd').value;
+            
+            if(!yemek) { alert("Lütfen bir yemek tercihi yapınız!"); return; }
+            if(!ogrAd) { alert("Lütfen öğrenci adını doldurunuz!"); return; }
+
+            // Verileri aktar
+            document.getElementById('p_ogrAd').innerText = ogrAd;
+            document.getElementById('p_ogrTC').innerText = document.getElementById('ogrTC').value;
+            document.getElementById('p_ogrSinif').innerText = document.getElementById('ogrSinif').value;
+            document.getElementById('p_veliAd').innerText = document.getElementById('veliAd').value;
+            document.getElementById('p_veliTel').innerText = document.getElementById('veliTel').value;
+            document.getElementById('p_yemek').innerText = yemek.toUpperCase();
+
+            const element = document.getElementById('pdfSablon');
+            
+            // PDF Ayarları
+            const opt = {
+                margin: 0.5,
+                filename: 'Uludag_Gezisi_Izin_Belgesi.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+            };
+
+            // PDF oluştur ve indir
+            html2pdf().from(element).set(opt).save().catch(err => console.error(err));
+        }
+    </script>
+</body>
+</html>
