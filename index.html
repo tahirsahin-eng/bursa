@@ -1,101 +1,75 @@
-<?php
-include "db.php";
-
-// Veritabanındaki tüm kayıtları en yeni tarihliden başlayarak çek
-$query = "SELECT * FROM gezi_kayitlari ORDER BY id DESC";
-$result = $conn->query($query);
-?>
 <!DOCTYPE html>
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Saffet Çam Ortaokulu - Gezi Yönetim Paneli</title>
+    <title>Saffet Çam Ortaokulu - Uludağ Gezisi Başvuru Formu</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; }
+        body { background-color: #f8fafc; font-family: 'Inter', sans-serif; }
+        .menu-option { cursor: pointer; border: 4px solid transparent; transition: all 0.2s; position: relative; }
+        .menu-option.selected { border-color: #2563eb; transform: scale(1.02); background-color: #eff6ff; }
+        .menu-option.selected::after { 
+            content: '\f058'; font-family: 'Font Awesome 5 Free'; font-weight: 900;
+            position: absolute; top: 10px; right: 10px; color: #2563eb; font-size: 24px; background: white; border-radius: 50%;
+        }
+        #pdfSablon { position: absolute; left: -9999px; top: -9999px; background: white; }
     </style>
 </head>
-<body class="bg-slate-50 p-4 md:p-10">
+<body class="bg-slate-100 pb-20">
 
-    <div class="max-w-6xl mx-auto">
-        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 mb-8 flex flex-col md:flex-row justify-between items-center gap-6">
-            <div>
-                <h1 class="text-2xl font-bold text-slate-800">Gezi Başvuru Listesi</h1>
-                <p class="text-slate-500 text-sm mt-1">Saffet Çam Ortaokulu Müdürlüğü - 14 Şubat Uludağ Gezisi</p>
-            </div>
-            <div class="flex gap-4">
-                <a href="export_excel.php" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2.5 rounded-xl font-semibold transition flex items-center shadow-sm">
-                    <i class="fas fa-file-excel mr-2"></i> Excel Raporu Al
-                </a>
-                <a href="export_pdf_list.php" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2.5 rounded-xl font-semibold transition flex items-center shadow-sm">
-                    <i class="fas fa-file-pdf mr-2"></i> PDF Liste İndir
-                </a>
-            </div>
+    <div class="max-w-4xl mx-auto bg-white shadow-xl mt-10 rounded-3xl overflow-hidden border border-slate-200">
+        <div class="bg-blue-800 p-8 text-white text-center">
+            <h2 class="text-sm tracking-widest uppercase opacity-80">Saffet Çam Ortaokulu Müdürlüğü</h2>
+            <h1 class="text-3xl font-bold mt-2 text-white">14 ŞUBAT ULUDAĞ GEZİSİ DUYURUSU</h1>
         </div>
 
-        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full text-left">
-                    <thead>
-                        <tr class="bg-slate-50 border-b border-slate-100">
-                            <th class="p-5 font-bold text-slate-600 text-sm uppercase">Öğrenci Bilgileri</th>
-                            <th class="p-5 font-bold text-slate-600 text-sm uppercase">Sınıf / No</th>
-                            <th class="p-5 font-bold text-slate-600 text-sm uppercase">Veli İletişim</th>
-                            <th class="p-5 font-bold text-slate-600 text-sm uppercase text-center">Yemek Tercihi</th>
-                            <th class="p-5 font-bold text-slate-600 text-sm uppercase">Kayıt Tarihi</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100">
-                        <?php if ($result->num_rows > 0): ?>
-                            <?php while($row = $result->fetch_assoc()): ?>
-                            <tr class="hover:bg-slate-50/80 transition-colors">
-                                <td class="p-5">
-                                    <div class="font-bold text-slate-900"><?php echo htmlspecialchars($row['ogrAd']); ?></div>
-                                    <div class="text-xs text-slate-400 mt-1 uppercase tracking-tighter">TC: <?php echo htmlspecialchars($row['ogrTC']); ?></div>
-                                </td>
-                                <td class="p-5 text-slate-700 font-medium">
-                                    <?php echo htmlspecialchars($row['ogrSinif']); ?>
-                                </td>
-                                <td class="p-5">
-                                    <div class="text-slate-900 font-semibold text-sm"><?php echo htmlspecialchars($row['veliAd']); ?></div>
-                                    <div class="text-blue-600 text-xs font-bold mt-1 tracking-wider"><?php echo htmlspecialchars($row['veliTel']); ?></div>
-                                </td>
-                                <td class="p-5 text-center">
-                                    <?php 
-                                        $yemekClass = ($row['yemek'] == 'Köfte Menü') 
-                                            ? 'bg-orange-100 text-orange-700' 
-                                            : 'bg-blue-100 text-blue-700'; 
-                                    ?>
-                                    <span class="px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-tight <?php echo $yemekClass; ?>">
-                                        <?php echo htmlspecialchars($row['yemek']); ?>
-                                    </span>
-                                </td>
-                                <td class="p-5 text-sm text-slate-500 font-medium">
-                                    <?php echo date("d.m.Y H:i", strtotime($row['kayit_tarihi'])); ?>
-                                </td>
-                            </tr>
-                            <?php endwhile; ?>
-                        <?php else: ?>
-                            <tr>
-                                <td colspan="5" class="p-20 text-center">
-                                    <i class="fas fa-folder-open text-slate-200 text-5xl mb-4 block"></i>
-                                    <span class="text-slate-400 italic">Henüz bir başvuru kaydı yapılmamış.</span>
-                                </td>
-                            </tr>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
+        <div class="p-8">
+            <div class="grid md:grid-cols-2 gap-4 mb-8">
+                <div class="bg-blue-50 p-4 rounded-2xl border border-blue-100">
+                    <h4 class="font-bold text-blue-800 mb-1"><i class="fas fa-route mr-2"></i>Gezi Güzergahı</h4>
+                    <p class="text-xs text-blue-700 leading-relaxed">Uludağ, İnkaya Ulu Çınar, Bursa Bilim Merkezi, Köfteci Yusuf, Anatolium AVM.</p>
+                </div>
+                <div class="bg-amber-50 p-4 rounded-2xl border border-amber-100">
+                    <h4 class="font-bold text-amber-800 mb-1"><i class="fas fa-exclamation-circle mr-2"></i>Önemli Not</h4>
+                    <p class="text-xs text-amber-700 leading-relaxed">Ücret: 1700 TL. Son teslim tarihi: 5 Şubat 2026. Yedek kıyafet bulundurulması zorunludur.</p>
+                </div>
             </div>
-        </div>
 
-        <div class="mt-8 flex justify-between items-center text-slate-400 text-xs px-4">
-            <p>&copy; 2026 Saffet Çam Ortaokulu Müdürlüğü - Bilgi İşlem</p>
-            <p>Toplam Kayıt: <span class="font-bold text-slate-600"><?php echo $result->num_rows; ?></span></p>
-        </div>
-    </div>
+            <h3 class="text-xl font-bold text-slate-800 mb-6 flex items-center">
+                <i class="fas fa-utensils text-orange-500 mr-3"></i> Yemek Tercihinizi Seçiniz
+            </h3>
+            
+            <div class="grid md:grid-cols-2 gap-6 mb-10">
+                <div id="kofteCard" onclick="secYemek('Köfte Menü')" class="menu-option bg-white rounded-2xl shadow-sm border-2 border-slate-100 overflow-hidden">
+                    <img src="WhatsApp Image 2026-01-05 at 17.59.04.jpeg" alt="Köfte Menü" class="w-full h-52 object-cover">
+                    <div class="p-4 text-center font-bold text-slate-700">Tam Porsiyon Köfte Ekmek Menü</div>
+                </div>
 
-</body>
-</html>
+                <div id="donerCard" onclick="secYemek('Döner Menü')" class="menu-option bg-white rounded-2xl shadow-sm border-2 border-slate-100 overflow-hidden">
+                    <img src="WhatsApp Image 2026-01-05 at 18.04.20.jpeg" alt="Döner Menü" class="w-full h-52 object-cover">
+                    <div class="p-4 text-center font-bold text-slate-700">Patatesli Döner Ekmek Menü</div>
+                </div>
+            </div>
+
+            <form id="geziFormu" class="space-y-6">
+                <input type="hidden" id="yemekField" required>
+                
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="space-y-4">
+                        <h4 class="font-bold text-blue-800 border-b pb-2">Öğrenci Bilgileri</h4>
+                        <input type="text" id="ogrAd" placeholder="Öğrenci Adı Soyadı" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" required>
+                        <input type="text" id="ogrTC" placeholder="T.C. Kimlik No" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" maxlength="11" required>
+                        <input type="text" id="ogrSinif" placeholder="Sınıf / Okul No" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" required>
+                    </div>
+                    <div class="space-y-4">
+                        <h4 class="font-bold text-blue-800 border-b pb-2">Veli Bilgileri</h4>
+                        <input type="text" id="veliAd" placeholder="Veli Adı Soyadı" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" required>
+                        <input type="tel" id="veliTel" placeholder="İletişim Telefonu" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" required>
+                    </div>
+                </div>
+
+                <button type="button" onclick="kaydetVeIndir()" class="w-full bg-blue-700 text-white py-4 rounded-2xl font-bold text-lg shadow-lg hover:bg-blue-800 transition transform hover:-translate-y-1">
+                    BAŞVURUYU TAMAMLA VE PDF
