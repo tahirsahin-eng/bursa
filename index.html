@@ -1,101 +1,159 @@
 <?php
-include "db.php";
+session_start();
 
-// Veritabanından kayıtları çek
-$query = "SELECT * FROM gezi_kayitlari ORDER BY id DESC";
-$result = $conn->query($query);
+// --- Veritabanı bağlantısı ---
+$host = "localhost";
+$user = "root";
+$pass = "";
+$db   = "okul";
+$conn = new mysqli($host, $user, $pass, $db);
+if ($conn->connect_error) { die("Bağlantı hatası: " . $conn->connect_error); }
+
+// --- Yönetici kullanıcı bilgileri ---
+$admin_user = "admin";
+$admin_pass = "12345"; // Güvenlik için password_hash() kullanabilirsin
+
+// --- Giriş kontrolü ---
+if(isset($_POST['login'])) {
+    if($_POST['username'] === $admin_user && $_POST['password'] === $admin_pass) {
+        $_SESSION['admin'] = true;
+    } else {
+        $login_error = "Hatalı giriş!";
+    }
+}
+
+// --- Çıkış ---
+if(isset($_GET['logout'])) {
+    session_destroy();
+    header("Location: uludag_gezi.php");
+    exit;
+}
+
+// --- Form kaydı ---
+if(isset($_POST['kaydet'])) {
+    $stmt = $conn->prepare("INSERT INTO gezi_kayitlari (ogrAd, ogrTC, ogrSinif, veliAd, veliTel, yemek) VALUES (?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("ssssss", $_POST['ogrAd'], $_POST['ogrTC'], $_POST['ogrSinif'], $_POST['veliAd'], $_POST['veliTel'], $_POST['yemek']);
+    $stmt->execute();
+    $kayit_mesaj = "Başvuru başarıyla kaydedildi!";
+}
+
+// --- Excel export ---
+if(isset($_GET['export']) && $_GET['export']=="excel") {
+    require 'vendor/autoload.php';
+    use PhpOffice\PhpSpreadsheet\Spreadsheet;
+    use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+
+    $result = $conn->query("SELECT * FROM gezi_kayitlari ORDER BY id DESC");
+    $spreadsheet = new Spreadsheet();
+    $sheet = $spreadsheet->getActiveSheet();
+    $sheet->fromArray(['Ad Soyad','TC','Sınıf','Veli','Telefon','Yemek','Tarih'], NULL, 'A1');
+
+    $rowNum = 2;
+    while($row = $result->fetch_assoc()) {
+        $sheet->fromArray([$row['ogrAd'],$row['ogrTC'],$row['ogrSinif'],$row['veliAd'],$row['veliTel'],$row['yemek'],$row['kayit_tarihi']], NULL, "A$rowNum");
+        $rowNum++;
+    }
+
+    $writer = new Xlsx($spreadsheet);
+    header('Content-Type: application/vnd.ms-excel');
+    header('Content-Disposition: attachment;filename="gezi_kayitlari.xlsx"');
+    header('Cache-Control: max-age=0');
+    $writer->save('php://output');
+    exit;
+}
+
+// --- PDF export ---
+if(isset($_GET['export']) && $_GET['export']=="pdf") {
+    require 'vendor/autoload.php';
+    require_once('vendor/tecnickcom/tcpdf/tcpdf.php');
+
+    $result = $conn->query("SELECT * FROM gezi_kayitlari ORDER BY id DESC");
+    $pdf = new TCPDF();
+    $pdf->AddPage();
+    $pdf->SetFont('dejavusans','',10);
+
+    $html = "<h2>Gezi Kayıtları</h2><table border='1' cellpadding='4'><tr>
+    <th>Ad Soyad</th><th>TC</th><th>Sınıf</th><th>Veli</th><th>Telefon</th><th>Yemek</th><th>Tarih</th></tr>";
+
+    while($row = $result->fetch_assoc()) {
+        $html .= "<tr>
+        <td>{$row['ogrAd']}</td>
+        <td>{$row['ogrTC']}</td>
+        <td>{$row['ogrSinif']}</td>
+        <td>{$row['veliAd']}</td>
+        <td>{$row['veliTel']}</td>
+        <td>{$row['yemek']}</td>
+        <td>{$row['kayit_tarihi']}</td>
+        </tr>";
+    }
+    $html .= "</table>";
+    $pdf->writeHTML($html);
+    $pdf->Output("gezi_kayitlari.pdf","D");
+    exit;
+}
 ?>
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Yönetim Paneli | Saffet Çam Ortaokulu</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
-    </style>
+  <meta charset="UTF-8">
+  <title>Uludağ Gezisi Sistemi</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="p-6">
+<body class="bg-gray-100 p-6">
 
-    <div class="max-w-6xl mx-auto">
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-8 flex flex-col md:flex-row justify-between items-center">
-            <div>
-                <h1 class="text-2xl font-bold text-slate-800">Uludağ Gezisi Kayıt Paneli</h1>
-                <p class="text-slate-500 text-sm">Saffet Çam Ortaokulu Müdürlüğü Gezi Takibi</p>
-            </div>
-            <div class="flex gap-4">
-                <a href="export_excel.php" class="bg-green-600 text-white px-5 py-2 rounded-xl font-bold hover:bg-green-700 transition flex items-center">
-                    <i class="fas fa-file-excel mr-2"></i> Excel Çıktısı
-                </a>
-                <button onclick="window.print()" class="bg-slate-800 text-white px-5 py-2 rounded-xl font-bold hover:bg-slate-900 transition">
-                    <i class="fas fa-print mr-2"></i> Yazdır
-                </button>
-            </div>
-        </div>
+<?php if(!isset($_SESSION['admin'])): ?>
+  <!-- Öğrenci Başvuru Formu -->
+  <div class="max-w-xl mx-auto bg-white p-6 rounded shadow">
+    <h1 class="text-xl font-bold mb-4">Uludağ Gezisi Başvuru Formu</h1>
+    <?php if(isset($kayit_mesaj)) echo "<p class='text-green-600 mb-4'>$kayit_mesaj</p>"; ?>
+    <form method="post">
+      <input type="text" name="ogrAd" placeholder="Öğrenci Adı Soyadı" required class="border p-2 w-full mb-2">
+      <input type="text" name="ogrTC" placeholder="T.C. Kimlik No" maxlength="11" required class="border p-2 w-full mb-2">
+      <input type="text" name="ogrSinif" placeholder="Sınıf / Okul No" required class="border p-2 w-full mb-2">
+      <input type="text" name="veliAd" placeholder="Veli Adı Soyadı" required class="border p-2 w-full mb-2">
+      <input type="tel" name="veliTel" placeholder="Veli Telefon" required class="border p-2 w-full mb-2">
+      <select name="yemek" required class="border p-2 w-full mb-2">
+        <option value="">Yemek Seçiniz</option>
+        <option value="Köfte Menü">Köfte Menü</option>
+        <option value="Döner Menü">Döner Menü</option>
+      </select>
+      <button type="submit" name="kaydet" class="bg-blue-600 text-white px-4 py-2 rounded">Kaydı Gönder</button>
+    </form>
+  </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm text-center">
-                <span class="text-slate-400 text-xs font-bold uppercase">Toplam Kayıt</span>
-                <h2 class="text-3xl font-black text-blue-600 mt-1"><?php echo $result->num_rows; ?></h2>
-            </div>
-            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm text-center">
-                <span class="text-slate-400 text-xs font-bold uppercase">Beklenen Toplam Ücret</span>
-                <h2 class="text-3xl font-black text-slate-800 mt-1"><?php echo number_format($result->num_rows * 1700, 0, ',', '.'); ?> TL</h2>
-            </div>
-            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm text-center border-l-4 border-l-orange-500">
-                <span class="text-slate-400 text-xs font-bold uppercase">Gezi Tarihi</span>
-                <h2 class="text-3xl font-black text-orange-600 mt-1">14.02.2026</h2>
-            </div>
-        </div>
+  <!-- Yönetici Giriş -->
+  <div class="max-w-md mx-auto bg-white p-6 rounded shadow mt-10">
+    <h2 class="text-lg font-bold mb-4">Yönetici Girişi</h2>
+    <?php if(isset($login_error)) echo "<p class='text-red-600 mb-4'>$login_error</p>"; ?>
+    <form method="post">
+      <input type="text" name="username" placeholder="Kullanıcı Adı" required class="border p-2 w-full mb-2">
+      <input type="password" name="password" placeholder="Şifre" required class="border p-2 w-full mb-2">
+      <button type="submit" name="login" class="bg-gray-800 text-white px-4 py-2 rounded">Giriş Yap</button>
+    </form>
+  </div>
 
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full text-left">
-                    <thead class="bg-slate-50 border-b border-slate-100">
-                        <tr>
-                            <th class="p-4 text-xs font-bold text-slate-500 uppercase">Öğrenci Ad Soyad</th>
-                            <th class="p-4 text-xs font-bold text-slate-500 uppercase">Sınıf/No</th>
-                            <th class="p-4 text-xs font-bold text-slate-500 uppercase">Veli & Telefon</th>
-                            <th class="p-4 text-xs font-bold text-slate-500 uppercase text-center">Yemek</th>
-                            <th class="p-4 text-xs font-bold text-slate-500 uppercase text-right">Tarih</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-50">
-                        <?php if ($result->num_rows > 0): ?>
-                            <?php while($row = $result->fetch_assoc()): ?>
-                            <tr class="hover:bg-slate-50 transition">
-                                <td class="p-4">
-                                    <div class="font-bold text-slate-800"><?php echo htmlspecialchars($row['ogrAd']); ?></div>
-                                    <div class="text-xs text-slate-400">TC: <?php echo htmlspecialchars($row['ogrTC']); ?></div>
-                                </td>
-                                <td class="p-4 text-slate-600 font-medium"><?php echo htmlspecialchars($row['ogrSinif']); ?></td>
-                                <td class="p-4">
-                                    <div class="font-bold text-slate-700"><?php echo htmlspecialchars($row['veliAd']); ?></div>
-                                    <div class="text-xs text-blue-600 font-bold"><?php echo htmlspecialchars($row['veliTel']); ?></div>
-                                </td>
-                                <td class="p-4 text-center">
-                                    <span class="px-3 py-1 rounded-lg text-[10px] font-black uppercase <?php echo ($row['yemek'] == 'Köfte Menü') ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'; ?>">
-                                        <?php echo htmlspecialchars($row['yemek']); ?>
-                                    </span>
-                                </td>
-                                <td class="p-4 text-right text-xs text-slate-400 italic">
-                                    <?php echo date("d.m.Y H:i", strtotime($row['kayit_tarihi'])); ?>
-                                </td>
-                            </tr>
-                            <?php endwhile; ?>
-                        <?php else: ?>
-                            <tr>
-                                <td colspan="5" class="p-10 text-center text-slate-400 italic">Henüz başvuru kaydı bulunmamaktadır.</td>
-                            </tr>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        <p class="mt-6 text-center text-slate-400 text-xs italic">Son Teslim Tarihi: 5 Şubat 2026 | Sorumlu: Fatma Erdem</p>
+<?php else: ?>
+  <!-- Yönetim Paneli -->
+  <div class="flex justify-between mb-6">
+    <h1 class="text-2xl font-bold">Uludağ Gezisi Kayıt Paneli</h1>
+    <div class="flex gap-4">
+      <a href="?export=excel" class="bg-green-600 text-white px-4 py-2 rounded">Excel Aktar</a>
+      <a href="?export=pdf" class="bg-red-600 text-white px-4 py-2 rounded">PDF Aktar</a>
+      <a href="?logout=1" class="bg-gray-600 text-white px-4 py-2 rounded">Çıkış Yap</a>
     </div>
-
-</body>
-</html>
+  </div>
+  <?php
+  $result = $conn->query("SELECT * FROM gezi_kayitlari ORDER BY id DESC");
+  ?>
+  <table class="table-auto border-collapse border border-gray-400 w-full bg-white">
+    <thead>
+      <tr class="bg-blue-200">
+        <th class="border px-4 py-2">Ad Soyad</th>
+        <th class="border px-4 py-2">TC</th>
+        <th class="border px-4 py-2">Sınıf</th>
+        <th class="border px-4 py-2">Veli</th>
+        <th class="border px-4 py-2">Telefon</th>
+        <th class="border px-4 py-2">Yemek</th>
+        <th class="border px-4 py-2">Tarih</th>
+      </tr>
+    </thead>
