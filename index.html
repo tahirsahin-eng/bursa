@@ -154,3 +154,165 @@ HTML
     </script>
 </body>
 </html>
+/uludag_gezi/
+│
+├── index.html          # Öğrenci başvuru formu
+├── kaydet.php          # Form verilerini veritabanına kaydeder
+├── panel.php           # Kontrol paneli (kayıtları listeler)
+├── export_pdf.php      # PDF çıktısı
+├── export_excel.php    # Excel çıktısı
+├── db.php              # Veritabanı bağlantısı
+└── vendor/             # PhpSpreadsheet ve TCPDF kütüphaneleri
+<?php
+$host = "localhost";
+$user = "root";
+$pass = "";
+$db   = "okul";
+
+$conn = new mysqli($host, $user, $pass, $db);
+if ($conn->connect_error) {
+    die("Bağlantı hatası: " . $conn->connect_error);
+}
+?>
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>Uludağ Gezisi Başvuru</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 p-10">
+
+  <h1 class="text-2xl font-bold mb-6">Uludağ Gezisi Başvuru Formu</h1>
+
+  <form id="geziFormu" class="space-y-4">
+    <input type="text" id="ogrAd" placeholder="Öğrenci Adı Soyadı" required class="border p-2 w-full">
+    <input type="text" id="ogrTC" placeholder="T.C. Kimlik No" maxlength="11" required class="border p-2 w-full">
+    <input type="text" id="ogrSinif" placeholder="Sınıf / Okul No" required class="border p-2 w-full">
+    <input type="text" id="veliAd" placeholder="Veli Adı Soyadı" required class="border p-2 w-full">
+    <input type="tel" id="veliTel" placeholder="Veli Telefon" required class="border p-2 w-full">
+
+    <select id="secilenYemek" required class="border p-2 w-full">
+      <option value="">Yemek Seçiniz</option>
+      <option value="Köfte Menü">Köfte Menü</option>
+      <option value="Döner Menü">Döner Menü</option>
+    </select>
+
+    <button type="button" onclick="kaydetVeritabani()" class="bg-blue-600 text-white px-4 py-2 rounded">
+      Kaydı Gönder
+    </button>
+  </form>
+
+  <script>
+    function kaydetVeritabani() {
+      const data = {
+        ogrAd: document.getElementById('ogrAd').value,
+        ogrTC: document.getElementById('ogrTC').value,
+        ogrSinif: document.getElementById('ogrSinif').value,
+        veliAd: document.getElementById('veliAd').value,
+        veliTel: document.getElementById('veliTel').value,
+        yemek: document.getElementById('secilenYemek').value
+      };
+
+      fetch("kaydet.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      })
+      .then(res => res.json())
+      .then(res => alert(res.message))
+      .catch(err => console.error(err));
+    }
+  </script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>Uludağ Gezisi Başvuru</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 p-10">
+
+  <h1 class="text-2xl font-bold mb-6">Uludağ Gezisi Başvuru Formu</h1>
+
+  <form id="geziFormu" class="space-y-4">
+    <input type="text" id="ogrAd" placeholder="Öğrenci Adı Soyadı" required class="border p-2 w-full">
+    <input type="text" id="ogrTC" placeholder="T.C. Kimlik No" maxlength="11" required class="border p-2 w-full">
+    <input type="text" id="ogrSinif" placeholder="Sınıf / Okul No" required class="border p-2 w-full">
+    <input type="text" id="veliAd" placeholder="Veli Adı Soyadı" required class="border p-2 w-full">
+    <input type="tel" id="veliTel" placeholder="Veli Telefon" required class="border p-2 w-full">
+
+    <select id="secilenYemek" required class="border p-2 w-full">
+      <option value="">Yemek Seçiniz</option>
+      <option value="Köfte Menü">Köfte Menü</option>
+      <option value="Döner Menü">Döner Menü</option>
+    </select>
+
+    <button type="button" onclick="kaydetVeritabani()" class="bg-blue-600 text-white px-4 py-2 rounded">
+      Kaydı Gönder
+    </button>
+  </form>
+
+  <script>
+    function kaydetVeritabani() {
+      const data = {
+        ogrAd: document.getElementById('ogrAd').value,
+        ogrTC: document.getElementById('ogrTC').value,
+        ogrSinif: document.getElementById('ogrSinif').value,
+        veliAd: document.getElementById('veliAd').value,
+        veliTel: document.getElementById('veliTel').value,
+        yemek: document.getElementById('secilenYemek').value
+      };
+
+      fetch("kaydet.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      })
+      .then(res => res.json())
+      .then(res => alert(res.message))
+      .catch(err => console.error(err));
+    }
+  </script>
+</body>
+</html>
+
+<?php
+require 'vendor/autoload.php';
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+include "db.php";
+
+$result = $conn->query("SELECT * FROM gezi_kayitlari");
+$spreadsheet = new Spreadsheet();
+$sheet = $spreadsheet->getActiveSheet();
+$sheet->fromArray(['Ad Soyad','TC','Sınıf','Veli','Telefon','Yemek','Tarih'], NULL, 'A1');
+
+$rowNum = 2;
+while($row = $result->fetch_assoc()) {
+    $sheet->fromArray([$row['ogrAd'],$row['ogrTC'],$row['ogrSinif'],$row['veliAd'],$row['veliTel'],$row['yemek'],$row['kayit_tarihi']], NULL, "A$rowNum");
+    $rowNum++;
+}
+
+$writer = new Xlsx($spreadsheet);
+header('Content-Type: application/vnd.ms-excel');
+header('Content-Disposition: attachment;filename="gezi_kayitlari.xlsx"');
+header('Cache-Control: max-age=0');
+$writer->save('php://output');
+?>
+<?php
+require 'vendor/autoload.php';
+require_once('vendor/tecnickcom/tcpdf/tcpdf.php');
+include "db.php";
+
+$result = $conn->query("SELECT * FROM gezi_kayitlari");
+
+$pdf = new TCPDF();
+$pdf->AddPage();
+$pdf->SetFont('dejavusans','',10);
+
+$html = "<h2>Gezi Kayıtları</h2><table border='1' cellpadding='4'><tr><th>Ad Soyad</th><th>TC</th><th>Sınıf</th><th>Veli</th><th>Telefon</th><th>Yemek</th><th
+
+
