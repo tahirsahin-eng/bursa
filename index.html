@@ -1,95 +1,3 @@
-CREATE TABLE IF NOT EXISTS gezi_kayitlari (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    ogrAd VARCHAR(100),
-    ogrTC VARCHAR(11),
-    ogrSinif VARCHAR(50),
-    veliAd VARCHAR(100),
-    veliTel VARCHAR(20),
-    yemek VARCHAR(50),
-    kayit_tarihi TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-<?php
-include "db.php";
-
-// Kayıtları çek
-$query = "SELECT * FROM gezi_kayitlari ORDER BY id DESC";
-$result = $conn->query($query);
-?>
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Yönetim Paneli - Uludağ Gezisi</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-</head>
-<body class="bg-gray-100 p-6">
-
-    <div class="max-w-6xl mx-auto">
-        <div class="bg-white rounded-2xl shadow-sm p-6 mb-8 flex flex-col md:flex-row justify-between items-center gap-4">
-            <div>
-                <h1 class="text-2xl font-bold text-gray-800">Gezi Başvuru Listesi</h1>
-                <p class="text-gray-500 text-sm">Saffet Çam Ortaokulu - Uludağ Gezisi Yönetimi</p>
-            </div>
-            <div class="flex gap-3">
-                <a href="export_excel.php" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg font-medium transition flex items-center">
-                    <i class="fas fa-file-excel mr-2"></i> Excel İndir
-                </a>
-                <a href="export_pdf_list.php" class="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg font-medium transition flex items-center">
-                    <i class="fas fa-file-pdf mr-2"></i> PDF Liste İndir
-                </a>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead class="bg-gray-50 border-b">
-                        <tr>
-                            <th class="p-4 font-semibold text-gray-600">Öğrenci Ad Soyad</th>
-                            <th class="p-4 font-semibold text-gray-600">Sınıf/No</th>
-                            <th class="p-4 font-semibold text-gray-600">Veli Bilgisi</th>
-                            <th class="p-4 font-semibold text-gray-600">Yemek Tercihi</th>
-                            <th class="p-4 font-semibold text-gray-600">Kayıt Tarihi</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">
-                        <?php if ($result->num_rows > 0): ?>
-                            <?php while($row = $result->fetch_assoc()): ?>
-                            <tr class="hover:bg-blue-50/50 transition">
-                                <td class="p-4">
-                                    <div class="font-medium text-gray-900"><?php echo htmlspecialchars($row['ogrAd']); ?></div>
-                                    <div class="text-xs text-gray-400">TC: <?php echo htmlspecialchars($row['ogrTC']); ?></div>
-                                </td>
-                                <td class="p-4 text-gray-700"><?php echo htmlspecialchars($row['ogrSinif']); ?></td>
-                                <td class="p-4">
-                                    <div class="text-gray-800"><?php echo htmlspecialchars($row['veliAd']); ?></div>
-                                    <div class="text-xs text-blue-600 underline"><?php echo htmlspecialchars($row['veliTel']); ?></div>
-                                </td>
-                                <td class="p-4">
-                                    <span class="px-3 py-1 rounded-full text-xs font-bold <?php echo ($row['yemek'] == 'Köfte Menü') ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'; ?>">
-                                        <?php echo htmlspecialchars($row['yemek']); ?>
-                                    </span>
-                                </td>
-                                <td class="p-4 text-sm text-gray-500">
-                                    <?php echo date("d.m.Y H:i", strtotime($row['kayit_tarihi'])); ?>
-                                </td>
-                            </tr>
-                            <?php endwhile; ?>
-                        <?php else: ?>
-                            <tr>
-                                <td colspan="5" class="p-10 text-center text-gray-400 italic">Henüz başvuru kaydı bulunmuyor.</td>
-                            </tr>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-</body>
-</html>
 <!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -102,140 +10,247 @@ $result = $conn->query($query);
     <style>
         body { background-color: #f8fafc; font-family: 'Inter', sans-serif; }
         .menu-option { cursor: pointer; border: 4px solid transparent; transition: all 0.2s; position: relative; }
-        .menu-option.selected { border-color: #2563eb; transform: scale(1.02); background-color: #eff6ff; }
+        .menu-option.selected { border-color: #2563eb; background-color: #eff6ff; transform: scale(1.02); }
         .menu-option.selected::after { 
             content: '\f058'; font-family: 'Font Awesome 5 Free'; font-weight: 900;
             position: absolute; top: 10px; right: 10px; color: #2563eb; font-size: 24px; background: white; border-radius: 50%;
         }
-        /* PDF Şablonu başlangıçta tamamen görünmez ve yer kaplamaz */
         #pdfSablon { position: absolute; left: -9999px; top: -9999px; background: white; }
     </style>
 </head>
-<body class="bg-slate-100 pb-20">
-
-    <div class="max-w-4xl mx-auto bg-white shadow-xl mt-10 rounded-3xl overflow-hidden">
+<body class="bg-slate-100 p-4 md:p-10">
+    <div class="max-w-4xl mx-auto bg-white shadow-2xl rounded-3xl overflow-hidden">
         <div class="bg-blue-800 p-8 text-white text-center">
-            <h2 class="text-sm tracking-widest uppercase opacity-80">Saffet Çam Ortaokulu Müdürlüğü</h2>
-            <h1 class="text-3xl font-bold mt-2 text-white">14 ŞUBAT ULUDAĞ GEZİSİ DUYURUSU</h1>
+            <h2 class="text-sm uppercase tracking-widest opacity-80">Saffet Çam Ortaokulu Müdürlüğü</h2>
+            <h1 class="text-3xl font-bold mt-2">14 ŞUBAT ULUDAĞ GEZİSİ BAŞVURU</h1>
         </div>
 
         <div class="p-8">
-            <h3 class="text-xl font-bold text-slate-800 mb-6 flex items-center">
-                <i class="fas fa-utensils text-orange-500 mr-3"></i> Yemek Tercihinizi Seçiniz
-            </h3>
-            
-            <div class="grid md:grid-cols-2 gap-6 mb-10">
-                <div id="kofteCard" onclick="secYemek('Köfte Menü')" class="menu-option bg-white rounded-2xl shadow-sm border-2 border-slate-100 overflow-hidden">
-                    <img src="WhatsApp Image 2026-01-05 at 17.59.04.jpeg" alt="Köfte Menü" class="w-full h-56 object-cover">
-                    <div class="p-4 text-center">
-                        <span class="font-bold text-slate-800">Tam Porsiyon Köfte Ekmek Menü</span>
-                    </div>
-                </div>
+            <div class="bg-amber-50 border-l-4 border-amber-500 p-4 mb-8 text-sm text-amber-900">
+                <p><strong>Önemli Uyarı:</strong> Gezi ücreti 1700 TL'dir (Ulaşım, yemek, müze dahil)[cite: 14]. Son teslim tarihi 5 Şubat 2026'dır. Islak kıyafetle geziye devam edilmeyecek olup, yedek kıyafeti olmayan öğrencilerin sorumluluğu veliye aittir[cite: 28].</p>
+            </div>
 
-                <div id="donerCard" onclick="secYemek('Döner Menü')" class="menu-option bg-white rounded-2xl shadow-sm border-2 border-slate-100 overflow-hidden">
-                    <img src="WhatsApp Image 2026-01-05 at 18.04.20.jpeg" alt="Döner Menü" class="w-full h-56 object-cover">
-                    <div class="p-4 text-center">
-                        <span class="font-bold text-slate-800">Patatesli Döner Ekmek Menü</span>
-                    </div>
+            <h3 class="text-xl font-bold mb-6 italic"><i class="fas fa-utensils mr-2"></i>Yemek Tercihi</h3>
+            <div class="grid md:grid-cols-2 gap-6 mb-8">
+                <div id="kofteCard" onclick="secYemek('Köfte Menü')" class="menu-option rounded-xl overflow-hidden shadow">
+                    <img src="WhatsApp Image 2026-01-05 at 17.59.04.jpeg" class="w-full h-48 object-cover">
+                    <p class="p-3 text-center font-bold">Tam Porsiyon Köfte Ekmek Menü [cite: 11]</p>
+                </div>
+                <div id="donerCard" onclick="secYemek('Döner Menü')" class="menu-option rounded-xl overflow-hidden shadow">
+                    <img src="WhatsApp Image 2026-01-05 at 18.04.20.jpeg" class="w-full h-48 object-cover">
+                    <p class="p-3 text-center font-bold">Patatesli Döner Ekmek Menü [cite: 11]</p>
                 </div>
             </div>
 
-            <form id="geziFormu" class="space-y-6">
-                <input type="hidden" id="secilenYemek" required>
-                
-                <div class="grid md:grid-cols-2 gap-6">
-                    <div class="space-y-4">
-                        <h4 class="font-bold text-blue-800 border-b pb-2">Öğrenci Bilgileri</h4>
-                        <input type="text" id="ogrAd" placeholder="Adı Soyadı" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" required>
-                        <input type="text" id="ogrTC" placeholder="T.C. Kimlik No" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" maxlength="11" required>
-                        <input type="text" id="ogrSinif" placeholder="Sınıf / Okul No" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" required>
-                    </div>
-                    <div class="space-y-4">
-                        <h4 class="font-bold text-blue-800 border-b pb-2">Veli Bilgileri</h4>
-                        <input type="text" id="veliAd" placeholder="Veli Adı Soyadı" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" required>
-                        <input type="tel" id="veliTel" placeholder="İletişim Telefonu" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" required>
-                    </div>
+            <form id="geziFormu" class="grid md:grid-cols-2 gap-4">
+                <input type="hidden" id="yemek" required>
+                <div class="col-span-2 md:col-span-1">
+                    <label class="text-xs font-bold text-gray-500">Öğrenci Adı Soyadı [cite: 20]</label>
+                    <input type="text" id="ogrAd" required class="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <div class="col-span-2 md:col-span-1">
+                    <label class="text-xs font-bold text-gray-500">T.C. Kimlik No [cite: 21]</label>
+                    <input type="text" id="ogrTC" maxlength="11" required class="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-500">Sınıf / Okul No [cite: 22]</label>
+                    <input type="text" id="ogrSinif" required class="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-500">Veli Adı Soyadı [cite: 25]</label>
+                    <input type="text" id="veliAd" required class="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <div class="col-span-2">
+                    <label class="text-xs font-bold text-gray-500">Veli İletişim (Telefon) [cite: 26]</label>
+                    <input type="tel" id="veliTel" required class="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
                 </div>
 
-                <div class="bg-amber-50 p-4 rounded-xl text-sm text-amber-900 border border-amber-200 mt-6">
-                    <p><strong>Bilgi:</strong> Gezi ücreti 1700 TL'dir ve en geç 5 Şubat 2026 tarihine kadar teslim edilmelidir.</p>
-                    <p class="mt-1">Yanında yedek kıyafet bulundurmayan öğrencilerin sorumluluğu veliye aittir.</p>
+                <div class="col-span-2 flex gap-4 mt-6">
+                    <button type="button" onclick="kaydetVeIndir()" class="flex-1 bg-blue-700 text-white py-4 rounded-xl font-bold hover:bg-blue-800 transition shadow-lg">
+                        BAŞVURUYU TAMAMLA VE PDF İNDİR [cite: 15]
+                    </button>
                 </div>
-
-                <button type="button" onclick="pdfIndir()" class="w-full bg-blue-700 text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:bg-blue-800 transition">
-                    <i class="fas fa-file-download mr-2"></i> BAŞVURUYU TAMAMLA VE PDF İNDİR
-                </button>
             </form>
         </div>
     </div>
 
-    <div id="pdfSablon" style="padding: 40px; width: 700px; color: black; background-color: white;">
+    <div id="pdfSablon" style="padding: 40px; width: 700px; color: black;">
         <div style="text-align: center; border-bottom: 2px solid black; padding-bottom: 20px; margin-bottom: 30px;">
-            <h2 style="margin: 0; font-size: 20px;">SAFFET ÇAM ORTAOKULU MÜDÜRLÜĞÜ</h2>
-            <h3 style="margin: 10px 0 0 0; font-size: 18px; text-decoration: underline;">14 ŞUBAT ULUDAĞ GEZİSİ VELİ İZİN BELGESİ</h3>
+            <h2 style="margin: 0;">SAFFET ÇAM ORTAOKULU MÜDÜRLÜĞÜ [cite: 1, 16]</h2>
+            <h3 style="margin: 10px 0 0 0; text-decoration: underline;">14 ŞUBAT ULUDAĞ GEZİSİ VELİ İZİN BELGESİ [cite: 16]</h3>
         </div>
         
         <p style="font-size: 16px; line-height: 1.6;">
-            Velisi bulunduğum <strong id="p_ogrAd">....................</strong> isimli öğrencinin, 
-            <strong>14 Şubat 2026</strong> tarihindeki geziye katılmasına izin veriyorum.
+            Velisi bulunduğum ismi aşağıda yazılı öğrencinin, <strong>14 Şubat 2026</strong> tarihindeki Bursa-Uludağ gezisine katılmasına izin veriyorum[cite: 17]. 
+            Gezi ücretini ve bu belgeyi en geç <strong>5 Şubat 2026</strong> tarihine kadar Okul Aile Birliği Temsilcisi <strong>Fatma Erdem'e</strong> teslim edeceğimi, 
+            ayrıca öğrencinin yanında yedek kıyafet bulundurulması gerektiği konusunda bilgilendirildiğimi beyan ederim[cite: 18].
         </p>
         
-        <table style="width: 100%; border-collapse: collapse; margin: 30px 0;">
-            <tr><td style="border: 1px solid black; padding: 10px; font-weight: bold; width: 40%;">Öğrenci T.C. No:</td><td style="border: 1px solid black; padding: 10px;" id="p_ogrTC"></td></tr>
+        <table style="width: 100%; border-collapse: collapse; margin: 30px 0; border: 1px solid black;">
+            <tr><td style="border: 1px solid black; padding: 10px; font-weight: bold;">Öğrenci Adı Soyadı:</td><td style="border: 1px solid black; padding: 10px;" id="p_ogrAd"></td></tr>
+            <tr><td style="border: 1px solid black; padding: 10px; font-weight: bold;">Öğrenci T.C. No:</td><td style="border: 1px solid black; padding: 10px;" id="p_ogrTC"></td></tr>
             <tr><td style="border: 1px solid black; padding: 10px; font-weight: bold;">Sınıf / Okul No:</td><td style="border: 1px solid black; padding: 10px;" id="p_ogrSinif"></td></tr>
-            <tr><td style="border: 1px solid black; padding: 10px; font-weight: bold;">Yemek Tercihi:</td><td style="border: 1px solid black; padding: 10px; font-weight: bold; color: blue;" id="p_yemek"></td></tr>
             <tr><td style="border: 1px solid black; padding: 10px; font-weight: bold;">Veli Adı Soyadı:</td><td style="border: 1px solid black; padding: 10px;" id="p_veliAd"></td></tr>
-            <tr><td style="border: 1px solid black; padding: 10px; font-weight: bold;">Veli İletişim:</td><td style="border: 1px solid black; padding: 10px;" id="p_veliTel"></td></tr>
+            <tr><td style="border: 1px solid black; padding: 10px; font-weight: bold;">Yemek Tercihi:</td><td style="border: 1px solid black; padding: 10px; font-weight: bold; color: blue;" id="p_yemek"></td></tr>
         </table>
 
-        <p style="font-size: 14px; margin-top: 20px;">
-            Gezi ücretini ve bu belgeyi en geç <strong>5 Şubat 2026</strong> tarihine kadar Okul Aile Birliği Temsilcisi Fatma Erdem'e teslim edeceğimi beyan ederim.
-        </p>
-        
-        <div style="margin-top: 80px; display: flex; justify-content: space-between;">
-            <div style="font-size: 14px;">Tarih: ____ / ____ / 2026</div>
-            <div style="text-align: center; font-weight: bold;">Veli İmza<br><br><br>_________________</div>
+        <div style="margin-top: 50px; display: flex; justify-content: space-between;">
+            <div>Tarih: .... / .... / 2026</div>
+            <div style="text-align: center;">Veli İmza [cite: 27]<br><br>_________________</div>
         </div>
     </div>
 
     <script>
         function secYemek(tip) {
-            document.getElementById('secilenYemek').value = tip;
-            document.getElementById('kofteCard').classList.remove('selected');
-            document.getElementById('donerCard').classList.remove('selected');
-            if(tip === 'Köfte Menü') document.getElementById('kofteCard').classList.add('selected');
-            else document.getElementById('donerCard').classList.add('selected');
+            document.getElementById('yemek').value = tip;
+            document.querySelectorAll('.menu-option').forEach(el => el.classList.remove('selected'));
+            event.currentTarget.classList.add('selected');
         }
 
-        function pdfIndir() {
-            const yemek = document.getElementById('secilenYemek').value;
-            const ogrAd = document.getElementById('ogrAd').value;
-            
-            if(!yemek) { alert("Lütfen bir yemek tercihi yapınız!"); return; }
-            if(!ogrAd) { alert("Lütfen öğrenci adını doldurunuz!"); return; }
-
-            // Verileri aktar
-            document.getElementById('p_ogrAd').innerText = ogrAd;
-            document.getElementById('p_ogrTC').innerText = document.getElementById('ogrTC').value;
-            document.getElementById('p_ogrSinif').innerText = document.getElementById('ogrSinif').value;
-            document.getElementById('p_veliAd').innerText = document.getElementById('veliAd').value;
-            document.getElementById('p_veliTel').innerText = document.getElementById('veliTel').value;
-            document.getElementById('p_yemek').innerText = yemek.toUpperCase();
-
-            const element = document.getElementById('pdfSablon');
-            
-            // PDF Ayarları
-            const opt = {
-                margin: 0.5,
-                filename: 'Uludag_Gezisi_Izin_Belgesi.pdf',
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true },
-                jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+        async function kaydetVeIndir() {
+            const formData = {
+                ogrAd: document.getElementById('ogrAd').value,
+                ogrTC: document.getElementById('ogrTC').value,
+                ogrSinif: document.getElementById('ogrSinif').value,
+                veliAd: document.getElementById('veliAd').value,
+                veliTel: document.getElementById('veliTel').value,
+                yemek: document.getElementById('yemek').value
             };
 
-            // PDF oluştur ve indir
-            html2pdf().from(element).set(opt).save().catch(err => console.error(err));
+            if(!formData.yemek || !formData.ogrAd || !formData.ogrTC || !formData.veliAd) {
+                return alert("Lütfen tüm alanları doldurun ve yemek tercihi yapın!");
+            }
+
+            try {
+                // Veritabanına Kaydet
+                const response = await fetch("kaydet.php", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(formData)
+                });
+                const result = await response.json();
+                
+                // PDF Bilgilerini Güncelle
+                document.getElementById('p_ogrAd').innerText = formData.ogrAd;
+                document.getElementById('p_ogrTC').innerText = formData.ogrTC;
+                document.getElementById('p_ogrSinif').innerText = formData.ogrSinif;
+                document.getElementById('p_p_veliAd').innerText = formData.veliAd;
+                document.getElementById('p_yemek').innerText = formData.yemek;
+
+                // PDF Oluştur ve İndir
+                const element = document.getElementById('pdfSablon');
+                const opt = {
+                    margin: 0.5,
+                    filename: 'Uludag_Gezisi_Izin_Belgesi.pdf',
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2 },
+                    jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+                };
+                
+                await html2pdf().from(element).set(opt).save();
+                alert("Kaydınız başarıyla tamamlandı ve izin belgeniz indirildi.");
+
+            } catch (err) { 
+                alert("İşlem sırasında bir hata oluştu. Lütfen tekrar deneyin."); 
+            }
         }
     </script>
+</body>
+</html>
+<?php
+include "db.php";
+
+// Kayıtları çek (En yeni kayıt en üstte)
+$query = "SELECT * FROM gezi_kayitlari ORDER BY id DESC";
+$result = $conn->query($query);
+?>
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yönetim Paneli - Saffet Çam Ortaokulu</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-slate-50 p-4 md:p-8">
+
+    <div class="max-w-6xl mx-auto">
+        <div class="bg-white rounded-3xl shadow-sm p-6 mb-8 flex flex-col md:flex-row justify-between items-center gap-4 border border-slate-200">
+            <div>
+                <h1 class="text-2xl font-extrabold text-slate-800">Gezi Başvuru Yönetimi</h1>
+                [cite_start]<p class="text-slate-500 text-sm">Saffet Çam Ortaokulu Müdürlüğü [cite: 1]</p>
+            </div>
+            <div class="flex gap-2">
+                <a href="export_excel.php" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-bold transition flex items-center">
+                    <i class="fas fa-file-excel mr-2"></i> EXCEL LİSTESİ
+                </a>
+                <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-xl text-sm font-bold transition flex items-center">
+                    <i class="fas fa-print mr-2"></i> YAZDIR
+                </button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-blue-600 p-6 rounded-3xl text-white shadow-lg shadow-blue-200">
+                <p class="text-blue-100 text-sm font-medium uppercase">Toplam Başvuru</p>
+                <h2 class="text-4xl font-black mt-1"><?php echo $result->num_rows; ?></h2>
+            </div>
+            <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+                <p class="text-slate-400 text-sm font-medium uppercase">Toplam Ücret Beklenen</p>
+                <h2 class="text-3xl font-black text-slate-800 mt-1"><?php echo $result->num_rows * 1700; ?> TL</h2>
+            </div>
+            <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+                <p class="text-slate-400 text-sm font-medium uppercase">Son Teslim Tarihi</p>
+                <h2 class="text-3xl font-black text-red-500 mt-1">05.02.2026</h2>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="bg-slate-50 border-b border-slate-100">
+                        <tr>
+                            <th class="p-5 text-xs font-bold text-slate-400 uppercase">Öğrenci Bilgileri</th>
+                            <th class="p-5 text-xs font-bold text-slate-400 uppercase">Sınıf/No</th>
+                            <th class="p-5 text-xs font-bold text-slate-400 uppercase">Veli & İletişim</th>
+                            <th class="p-5 text-xs font-bold text-slate-400 uppercase">Yemek Tercihi</th>
+                            <th class="p-5 text-xs font-bold text-slate-400 uppercase text-right">Kayıt Tarihi</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        <?php if ($result->num_rows > 0): ?>
+                            <?php while($row = $result->fetch_assoc()): ?>
+                            <tr class="hover:bg-slate-50 transition">
+                                <td class="p-5">
+                                    <div class="font-bold text-slate-800"><?php echo htmlspecialchars($row['ogrAd']); ?></div>
+                                    <div class="text-xs text-slate-400">TC: <?php echo htmlspecialchars($row['ogrTC']); ?></div>
+                                </td>
+                                <td class="p-5 text-slate-600 font-medium"><?php echo htmlspecialchars($row['ogrSinif']); ?></td>
+                                <td class="p-5">
+                                    <div class="font-semibold text-slate-700"><?php echo htmlspecialchars($row['veliAd']); ?></div>
+                                    <div class="text-blue-600 text-sm"><i class="fas fa-phone-alt mr-1"></i><?php echo htmlspecialchars($row['veliTel']); ?></div>
+                                </td>
+                                <td class="p-5">
+                                    <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase <?php echo ($row['yemek'] == 'Köfte Menü') ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'; ?>">
+                                        <?php echo htmlspecialchars($row['yemek']); ?>
+                                    </div>
+                                </td>
+                                <td class="p-5 text-right text-xs text-slate-400 font-mono">
+                                    <?php echo date("d.m.Y H:i", strtotime($row['kayit_tarihi'])); ?>
+                                </td>
+                            </tr>
+                            <?php endwhile; ?>
+                        <?php else: ?>
+                            <tr>
+                                <td colspan="5" class="p-20 text-center text-slate-400 italic">Henüz bir başvuru kaydı bulunmuyor.</td>
+                            </tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>
